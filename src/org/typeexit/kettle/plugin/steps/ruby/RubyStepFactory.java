@@ -25,8 +25,10 @@ public class RubyStepFactory {
 		c.setCompileMode(CompileMode.JIT);
 
 		c.setRunRubyInProcess(false);
-		ClassLoader loader = ScriptingContainer.class.getClassLoader();
+//		ClassLoader loader = ScriptingContainer.class.getClassLoader();
+    ClassLoader loader = Thread.currentThread().getContextClassLoader();
 		c.setClassLoader(loader);
+//  
 		
 		// does it make sense to include more in the class path? 
 		
