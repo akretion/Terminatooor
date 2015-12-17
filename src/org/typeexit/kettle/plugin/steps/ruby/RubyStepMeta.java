@@ -60,40 +60,40 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 		RUBY_1_8,
 		RUBY_1_9
 	};
-	
+
 	public RubyStepMeta() {
 		super();
 		setDefault();
 	}
 
 	/*------------------------------------------------------------------------------------------------------------------------------------------------
-	 * Row Stream Handling 
+	 * Row Stream Handling
 	 ------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 	public void getFields(RowMetaInterface r, String origin, RowMetaInterface[] info, StepMeta nextStep, VariableSpace space) {
-		
+
 		affectedFields = new ArrayList<ValueMetaInterface>(outputFields.size());
-		
+
 		if (clearInputFields){
 			r.clear();
 		}
-		
+
 		for (OutputFieldMeta field : outputFields) {
 
 			if (field.isUpdate()){
 				// no updates possible if all fields have been cleared before
 				if (clearInputFields){
-					throw new IllegalStateException("Field "+field.getName()+" cannot be updated because all input fields were requested to be removed!");	
+					throw new IllegalStateException("Field "+field.getName()+" cannot be updated because all input fields were requested to be removed!");
 				}
-				
+
 				// have a look at the existing field
 				int idx = r.indexOfValue(field.getName());
-				
+
 				// if the field is not there, bail out
 				if (idx < 0){
 					throw new IllegalStateException("Field "+field.getName()+ "cannot be updated. I cannot find it!");
 				}
-				
+
 				ValueMetaInterface v = r.getValueMeta(idx);
 				if (v.getType() != field.getType()){
 					// this field needs to be converted to another type
@@ -101,44 +101,44 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 					newValueMeta.setOrigin(origin);
 					r.setValueMeta(idx, newValueMeta);
 				}
-				
+
 				// add the field to affected fields
-				affectedFields.add(r.getValueMeta(idx));				
-				
+				affectedFields.add(r.getValueMeta(idx));
+
 			}
 			else{
 				// new field
 				ValueMetaInterface v = new ValueMeta(field.getName(), field.getType());
 				v.setOrigin(origin);
 				r.addValueMeta(v);
-				
+
 				// add the last to affected fields (might have been renamed)
 				v = r.getValueMetaList().get(r.getValueMetaList().size()-1);
 				field.setName(v.getName());
 				affectedFields.add(v);
-				
+
 			}
-			
+
 		}
-		
+
 	}
-	
+
     public boolean excludeFromRowLayoutVerification(){
         return true;
-    }	
-	
+    }
+
 	@Override
     public StepIOMetaInterface getStepIOMeta() {
 
 		StepIOMetaInterface ioMeta = new StepIOMeta(true, true, true, false, !infoSteps.isEmpty(), !targetSteps.isEmpty());
-    	
+
     	for (RoleStepMeta step : infoSteps) {
     		ioMeta.addStream(new Stream(StreamType.INFO, step.getStepMeta(), step.getRoleName(), StreamIcon.INFO, null));
     	}
     	for (RoleStepMeta step : targetSteps) {
     		ioMeta.addStream(new Stream(StreamType.TARGET, step.getStepMeta(), step.getRoleName(), StreamIcon.TARGET, null));
     	}
-    	
+
     	return ioMeta;
     }
 
@@ -150,14 +150,14 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 		for (RoleStepMeta target : targetSteps) {
 			target.setStepMeta(StepMeta.findStep(steps, target.getStepName()));
 		}
-	}	
+	}
 
 	public void check(List<CheckResultInterface> remarks, TransMeta transmeta, StepMeta stepMeta, RowMetaInterface prev, String input[], String output[], RowMetaInterface info) {
 		CheckResult cr;
 
 		// TODO: check if all updated fields are there
 		// TODO: check if any field is updated even though the incoming fields are cleared
-		
+
 		// See if we have input streams leading to this step!
 		if (input.length > 0) {
 			cr = new CheckResult(CheckResult.TYPE_RESULT_OK, "Step is receiving info from other steps.", stepMeta);
@@ -176,20 +176,20 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 	public void setDefault() {
 		scripts = new ArrayList<RubyScriptMeta>();
 		scripts.add(RubyScriptMeta.DEFAULT_SCRIPT);
-		
+
 		infoSteps = new ArrayList<RoleStepMeta>();
 		targetSteps = new ArrayList<RoleStepMeta>();
 		outputFields = new ArrayList<OutputFieldMeta>();
 		rubyVariables = new ArrayList<RubyVariableMeta>();
 		clearInputFields = false;
-		rubyVersion = RubyVersion.RUBY_1_8;
+		rubyVersion = RubyVersion.RUBY_1_9;
 		gemHome = "";
 	}
 
 	public RubyStepMeta clone() {
 		RubyStepMeta retval = (RubyStepMeta) super.clone();
 
-		// clone scripts 
+		// clone scripts
 		if (scripts != null) {
 			List<RubyScriptMeta> newScripts = new ArrayList<RubyScriptMeta>(scripts.size());
 			for (RubyScriptMeta rubyScriptMeta : scripts) {
@@ -197,7 +197,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			}
 			retval.setScripts(newScripts);
 		}
-		
+
 		// clone input steps
 		if (infoSteps != null){
 			List<RoleStepMeta> newInfoSteps = new ArrayList<RoleStepMeta>(infoSteps.size());
@@ -206,7 +206,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			}
 			retval.setInfoSteps(newInfoSteps);
 		}
-		
+
 		// clone target steps
 		if (targetSteps != null){
 			List<RoleStepMeta> newTargetSteps = new ArrayList<RoleStepMeta>(targetSteps.size());
@@ -214,8 +214,8 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 				newTargetSteps.add(step.clone());
 			}
 			retval.setTargetSteps(newTargetSteps);
-		}		
-		
+		}
+
 		// clone output fields
 		if (outputFields != null){
 			List<OutputFieldMeta> newOutputFields = new ArrayList<OutputFieldMeta>(outputFields.size());
@@ -224,7 +224,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			}
 			retval.setOutputFields(newOutputFields);
 		}
-		
+
 		// clone ruby variables
 		if (rubyVariables != null){
 			List<RubyVariableMeta> newRubyVariables = new ArrayList<RubyVariableMeta>(rubyVariables.size());
@@ -233,13 +233,13 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			}
 			retval.setRubyVariables(newRubyVariables);
 		}
-		
+
 
 		return retval;
 	}
 
 	/*------------------------------------------------------------------------------------------------------------------------------------------------
-	 * Serialization to XML	
+	 * Serialization to XML
 	 ------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 	public String getXML() throws KettleValueException {
@@ -258,13 +258,13 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 		}
 
 		retval.append(TAB).append("</scripts>").append(Const.CR);
-		
+
 		// save ruby version flag
 		retval.append(TAB).append(XMLHandler.addTagValue("rubyVersion", rubyVersion.name()));
-		
+
 		// save clear input fields flag
 		retval.append(TAB).append(XMLHandler.addTagValue("clearInputFields", clearInputFields)).append(Const.CR);
-		
+
 		// save output fields
 		retval.append(TAB).append("<outputFields>").append(Const.CR);
 		for(OutputFieldMeta out : outputFields){
@@ -275,7 +275,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			retval.append(TAB).append(TAB).append("</outputField>").append(Const.CR);
 		}
 		retval.append(TAB).append("</outputFields>").append(Const.CR);
-		
+
 		// save ruby variables
 		retval.append(TAB).append("<rubyVariables>").append(Const.CR);
 		for(RubyVariableMeta rvar : rubyVariables){
@@ -285,7 +285,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			retval.append(TAB).append(TAB).append("</rubyVariable>").append(Const.CR);
 		}
 		retval.append(TAB).append("</rubyVariables>").append(Const.CR);
-		
+
 		// save info steps
 		retval.append(TAB).append("<infoSteps>").append(Const.CR);
 		for(RoleStepMeta step : infoSteps){
@@ -295,7 +295,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			retval.append(TAB).append(TAB).append("</infoStep>").append(Const.CR);
 		}
 		retval.append(TAB).append("</infoSteps>").append(Const.CR);
-		
+
 		// save target steps
 		retval.append(TAB).append("<targetSteps>").append(Const.CR);
 		for(RoleStepMeta step : targetSteps){
@@ -304,11 +304,11 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			retval.append(TAB).append(TAB).append(TAB).append(XMLHandler.addTagValue("role", step.getRoleName()));
 			retval.append(TAB).append(TAB).append("</targetStep>").append(Const.CR);
 		}
-		retval.append(TAB).append("</targetSteps>").append(Const.CR);		
-		
+		retval.append(TAB).append("</targetSteps>").append(Const.CR);
+
 		// save gem home
 		retval.append(TAB).append(XMLHandler.addTagValue("gemHome", gemHome));
-		
+
 		return retval.toString();
 	}
 
@@ -325,25 +325,25 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			for (int i = 0; i < nrScripts; i++) {
 				Node sNode = XMLHandler.getSubNodeByNr(scriptNode, "script", i);
 				scripts.add(new RubyScriptMeta(
-								XMLHandler.getTagValue(sNode, "title"), 
-								XMLHandler.getTagValue(sNode, "body"), 
+								XMLHandler.getTagValue(sNode, "title"),
+								XMLHandler.getTagValue(sNode, "body"),
 								Role.valueOf(Const.NVL(XMLHandler.getTagValue(sNode, "role"), Role.LIB_SCRIPT.toString()))
 							)
 				);
 			}
-			
+
 			// load clear input fields flag
 			clearInputFields = "Y".equalsIgnoreCase(XMLHandler.getTagValue(stepnode, "clearInputFields"));
-			
+
 			// load ruby version
 			rubyVersion = RubyVersion.valueOf(Const.NVL(XMLHandler.getTagValue(stepnode, "rubyVersion"), RubyVersion.RUBY_1_8.toString()));
-			
+
 			// load ouput fields
 			outputFields.clear();
-			
+
 			Node outputFieldsNode = XMLHandler.getSubNode(stepnode, "outputFields");
 			int nrFields = XMLHandler.countNodes(outputFieldsNode, "outputField");
-			
+
 			for(int i=0;i<nrFields;i++){
 				Node sNode = XMLHandler.getSubNodeByNr(outputFieldsNode, "outputField", i);
 				String name = XMLHandler.getTagValue(sNode, "name");
@@ -351,49 +351,49 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 				boolean update = "Y".equalsIgnoreCase(XMLHandler.getTagValue(sNode, "update"));
 				outputFields.add(new OutputFieldMeta(name, type, update));
 			}
-			
+
 			// load ruby variables
 			rubyVariables.clear();
 
 			Node rubyVariablesNode = XMLHandler.getSubNode(stepnode, "rubyVariables");
 			int nrVars = XMLHandler.countNodes(rubyVariablesNode, "rubyVariable");
-			
+
 			for(int i=0;i<nrVars;i++){
 				Node sNode = XMLHandler.getSubNodeByNr(rubyVariablesNode, "rubyVariable", i);
 				String name = XMLHandler.getTagValue(sNode, "name");
 				String value = XMLHandler.getTagValue(sNode, "value");
 				rubyVariables.add(new RubyVariableMeta(name, value));
 			}
-			
+
 			// load info steps
 			infoSteps.clear();
 
 			Node infoStepsNode = XMLHandler.getSubNode(stepnode, "infoSteps");
 			int nrSteps = XMLHandler.countNodes(infoStepsNode, "infoStep");
-			
+
 			for(int i=0;i<nrSteps;i++){
 				Node sNode = XMLHandler.getSubNodeByNr(infoStepsNode, "infoStep", i);
 				String name = XMLHandler.getTagValue(sNode, "name");
 				String value = XMLHandler.getTagValue(sNode, "role");
 				infoSteps.add(new RoleStepMeta(name, value));
 			}
-			
+
 			// load target steps
 			targetSteps.clear();
 
 			Node targetStepsNode = XMLHandler.getSubNode(stepnode, "targetSteps");
 			int nrTargetSteps = XMLHandler.countNodes(targetStepsNode, "targetStep");
-			
+
 			for(int i=0;i<nrTargetSteps;i++){
 				Node sNode = XMLHandler.getSubNodeByNr(targetStepsNode, "targetStep", i);
 				String name = XMLHandler.getTagValue(sNode, "name");
 				String value = XMLHandler.getTagValue(sNode, "role");
 				targetSteps.add(new RoleStepMeta(name, value));
-			}			
-			
+			}
+
 			// load gem home
 			gemHome = Const.NVL(XMLHandler.getTagValue(stepnode, "gemHome"), "");
-						
+
 
 		} catch (Exception e) {
 			throw new KettleXMLException("Template Plugin Unable to read step info from XML node", e);
@@ -402,7 +402,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 	}
 
 	/*------------------------------------------------------------------------------------------------------------------------------------------------
-	 * Serialization to Database	
+	 * Serialization to Database
 	 ------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 	public void saveRep(Repository rep, ObjectId id_transformation, ObjectId id_step) throws KettleException {
@@ -411,56 +411,56 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			for (int i = 0; i < scripts.size(); i++) {
 				rep.saveStepAttribute(id_transformation, id_step, i, "script_title", scripts.get(i).getTitle());
 				rep.saveStepAttribute(id_transformation, id_step, i, "script_body", scripts.get(i).getScript());
-				rep.saveStepAttribute(id_transformation, id_step, i, "script_role", scripts.get(i).getRole().toString()); 
+				rep.saveStepAttribute(id_transformation, id_step, i, "script_role", scripts.get(i).getRole().toString());
 			}
-			
+
 			// save clear input fields flag
 			rep.saveStepAttribute(id_transformation, id_step, "clear_input_fields", clearInputFields);
-			
+
 			// save ruby version flag
 			rep.saveStepAttribute(id_transformation, id_step, "ruby_version", rubyVersion.toString());
-			
+
 			// save ouput fields
 			for(int i=0;i<outputFields.size();i++){
 				rep.saveStepAttribute(id_transformation, id_step, i, "output_field_name", outputFields.get(i).getName());
 				rep.saveStepAttribute(id_transformation, id_step, i, "output_field_type", outputFields.get(i).getType());
 				rep.saveStepAttribute(id_transformation, id_step, i, "output_field_update", outputFields.get(i).isUpdate());
 			}
-			
+
 			// save ruby variables
 			for(int i=0;i<rubyVariables.size();i++){
 				rep.saveStepAttribute(id_transformation, id_step, i, "ruby_variable_name", rubyVariables.get(i).getName());
 				rep.saveStepAttribute(id_transformation, id_step, i, "ruby_variable_value", rubyVariables.get(i).getValue());
 			}
-			
+
 			// save info steps
 			for(int i=0;i<infoSteps.size();i++){
 				rep.saveStepAttribute(id_transformation, id_step, i, "info_step_name", infoSteps.get(i).getStepName());
 				rep.saveStepAttribute(id_transformation, id_step, i, "info_step_role", infoSteps.get(i).getRoleName());
-			}		
-			
+			}
+
 			// save target steps
 			for(int i=0;i<targetSteps.size();i++){
 				rep.saveStepAttribute(id_transformation, id_step, i, "target_step_name", targetSteps.get(i).getStepName());
 				rep.saveStepAttribute(id_transformation, id_step, i, "target_step_role", targetSteps.get(i).getRoleName());
-			}				
-			
+			}
+
 			// save gem home
 			rep.saveStepAttribute(id_transformation, id_step, "gem_home", gemHome);
-			
-			
+
+
 		} catch (Exception e) {
 			throw new KettleException(BaseMessages.getString(PKG, "RubyStep.Exception.UnableToSaveStepInfoToRepository") + id_step, e);
 		}
-	}	
-	
+	}
+
 	public void readRep(Repository rep, ObjectId id_step, List<DatabaseMeta> databases, Map<String, Counter> counters) throws KettleException {
 		try {
 
 			// load scripts
 			int nrScripts = rep.countNrStepAttributes(id_step, "script_title");
 			scripts.clear();
-			
+
 			for (int i = 0; i < nrScripts; i++) {
 				RubyScriptMeta s = new RubyScriptMeta(
 						rep.getStepAttributeString(id_step, i, "script_title"),
@@ -469,17 +469,17 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 				);
 				scripts.add(s);
 			}
-			
+
 			// load clear input fields flag
 			clearInputFields = rep.getStepAttributeBoolean(id_step, "clear_input_fields");
-			
+
 			// load ruby version flag
 			rubyVersion = RubyVersion.valueOf(rep.getStepAttributeString(id_step, "ruby_version"));
-			
+
 			// load ouput fields
 			int nrFields = rep.countNrStepAttributes(id_step, "output_field_name");
 			outputFields.clear();
-			
+
 			for(int i=0;i<nrFields;i++){
 				OutputFieldMeta outField = new OutputFieldMeta(
 						rep.getStepAttributeString(id_step, i, "output_field_name"),
@@ -488,11 +488,11 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 				);
 				outputFields.add(outField);
 			}
-			
+
 			// load ruby variables
 			int nrVars = rep.countNrStepAttributes(id_step, "ruby_variable_name");
 			rubyVariables.clear();
-			
+
 			for(int i=0;i<nrVars;i++){
 				RubyVariableMeta var = new RubyVariableMeta(
 					rep.getStepAttributeString(id_step, i, "ruby_variable_name"),
@@ -500,35 +500,35 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 				);
 				rubyVariables.add(var);
 			}
-			
+
 			// load info steps
 			int nrSteps = rep.countNrStepAttributes(id_step, "info_step_name");
 			infoSteps.clear();
-			
+
 			for(int i=0;i<nrSteps;i++){
 				RoleStepMeta info = new RoleStepMeta(
 					rep.getStepAttributeString(id_step, i, "info_step_name"),
 					rep.getStepAttributeString(id_step, i, "info_step_role")
 				);
 				infoSteps.add(info);
-			}			
+			}
 
 			// load target steps
 			int nrTargetSteps = rep.countNrStepAttributes(id_step, "target_step_name");
 			targetSteps.clear();
-			
+
 			for(int i=0;i<nrTargetSteps;i++){
 				RoleStepMeta target = new RoleStepMeta(
 					rep.getStepAttributeString(id_step, i, "target_step_name"),
 					rep.getStepAttributeString(id_step, i, "target_step_role")
 				);
 				targetSteps.add(target);
-			}				
-			
-			// load gem home 
+			}
+
+			// load gem home
 			gemHome = Const.NVL(rep.getStepAttributeString(id_step, "gem_home"),"");
-			
-			
+
+
 		} catch (Exception e) {
 			throw new KettleException(BaseMessages.getString(PKG, "RubyStep.Exception.UnexpectedErrorInReadingStepInfo"), e);
 		}
@@ -537,7 +537,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 
 
 	/*------------------------------------------------------------------------------------------------------------------------------------------------
-	 * Interface access 	
+	 * Interface access
 	 ------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 	public StepDialogInterface getDialog(Shell shell, StepMetaInterface meta, TransMeta transMeta, String name) {
@@ -555,83 +555,83 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 	public boolean supportsErrorHandling(){
 		return true;
 	}
-	
+
 	/*------------------------------------------------------------------------------------------------------------------------------------------------
-	 * Convenience Methods 	
+	 * Convenience Methods
 	 ------------------------------------------------------------------------------------------------------------------------------------------------*/
 	// returns true if the step has direct input sources (does not consider info steps as input)
 	public boolean hasDirectInput(){
 		return !this.getParentStepMeta().getParentTransMeta().findPreviousSteps(this.getParentStepMeta(), false).isEmpty();
 	}
-	
+
 	// returns true if the step has direct input sources as well as info steps attached
 	public boolean hasMixedInput(){
 		return hasDirectInput() && !infoSteps.isEmpty();
 	}
-	
-	// returns the row script, returns an empty dummy script if there's none defined 
+
+	// returns the row script, returns an empty dummy script if there's none defined
 	public RubyScriptMeta getRowScript(){
-		
+
 		for(RubyScriptMeta s: scripts){
 			if (s.getRole() == Role.ROW_SCRIPT){
 				return s;
 			}
 		}
-		
+
 		return new RubyScriptMeta("dummy", "# dummy", Role.ROW_SCRIPT);
 	}
-	
+
 	// returns how many row scripts are defined (only legal count is 1)
 	public int getRowScriptCount(){
-		
+
 		int counter = 0;
 		for(RubyScriptMeta s: scripts){
 			if (s.getRole() == Role.ROW_SCRIPT){
 				counter++;
 			}
 		}
-		
+
 		return counter;
-	}	
-	
-	// returns the init script, returns null if there's none defined 
+	}
+
+	// returns the init script, returns null if there's none defined
 	public RubyScriptMeta getInitScript(){
-		
+
 		for(RubyScriptMeta s: scripts){
 			if (s.getRole() == Role.INIT_SCRIPT){
 				return s;
 			}
 		}
-		
+
 		return null;
-	}	
-	
-	// returns the dispose script, returns null if there's none defined 
+	}
+
+	// returns the dispose script, returns null if there's none defined
 	public RubyScriptMeta getDisposeScript(){
-		
+
 		for(RubyScriptMeta s: scripts){
 			if (s.getRole() == Role.DISPOSE_SCRIPT){
 				return s;
 			}
 		}
-		
+
 		return null;
-	}		
-	
+	}
+
 	// returns whether a particular field is changed or added by this step
 	public boolean addsOrChangesField(String fieldname){
-		
+
 		for (OutputFieldMeta field : getOutputFields()) {
 			if (field.getName().equals(fieldname)){
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
-	
+
 	/*------------------------------------------------------------------------------------------------------------------------------------------------
-	 * Getters and Setters 	
+	 * Getters and Setters
 	 ------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 	public List<RubyScriptMeta> getScripts() {
@@ -689,7 +689,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 	public RubyVersion getRubyVersion(){
 		return rubyVersion;
 	}
-	
+
 	public void setRubyVersion(RubyVersion ver){
 		rubyVersion = ver;
 	}
@@ -701,5 +701,5 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 	public void setGemHome(String gemHome) {
 		this.gemHome = gemHome;
 	}
-	
+
 }
