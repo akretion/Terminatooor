@@ -336,7 +336,7 @@ public class RubyStepMeta extends BaseStepMeta implements StepMetaInterface {
 			clearInputFields = "Y".equalsIgnoreCase(XMLHandler.getTagValue(stepnode, "clearInputFields"));
 
 			// load ruby version
-			rubyVersion = RubyVersion.valueOf(Const.NVL(XMLHandler.getTagValue(stepnode, "rubyVersion"), RubyVersion.RUBY_1_8.toString()));
+			rubyVersion = RubyVersion.valueOf(Const.NVL(XMLHandler.getTagValue(stepnode, "rubyVersion"), RubyVersion.RUBY_1_9.toString()));
 
 			// load ouput fields
 			outputFields.clear();

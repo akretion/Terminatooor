@@ -16,23 +16,23 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 import org.jruby.CompatVersion;
 import org.jruby.common.RubyWarnings;
-import org.jruby.lexer.yacc.ByteArrayLexerSource;
-import org.jruby.lexer.yacc.LexerSource;
-import org.jruby.lexer.yacc.RubyYaccLexer;
+import org.jruby.lexer.ByteListLexerSource;
+import org.jruby.lexer.LexerSource;
+import org.jruby.lexer.yacc.RubyLexer;
 import org.jruby.lexer.yacc.SyntaxException;
-import org.jruby.lexer.yacc.Token;
 import org.jruby.parser.ParserConfiguration;
 import org.jruby.parser.ParserSupport;
 import org.jruby.parser.RubyParserResult;
 import org.jruby.parser.Tokens;
 import org.jruby.Ruby;
+import org.jruby.util.ByteList;
 import org.jruby.embed.ScriptingContainer;
 import org.pentaho.di.ui.core.widget.StyledTextComp;
 import org.typeexit.kettle.plugin.steps.ruby.RubyStepMeta.RubyVersion;
 
 public class RubyStepSyntaxHighlighter {
 
-	RubyYaccLexer lexer;
+	RubyLexer lexer;
 	ParserSupport parserSupport;
 	Color[] colors;
 	final int TOKEN_COMMENT = -100;
@@ -56,7 +56,7 @@ public class RubyStepSyntaxHighlighter {
 	SortedSet<String> GLOBAL_FUNCTIONS_SET = new TreeSet<String>(Arrays.asList(STANDARD_GLOBAL_FUNCTIONS));
 	SortedSet<String> STANDARD_METHODS_SET = new TreeSet<String>(Arrays.asList(STANDARD_METHODS));
 	SortedSet<String> PSEUDO_KEYWORDS_SET = new TreeSet<String>(Arrays.asList(PSEUDO_KEYWORDS));
-	
+
 	final int COLOR_BLACK = 0;
 	final int COLOR_GREENISH = 1;
 	final int COLOR_BLUE = 2;
@@ -64,7 +64,7 @@ public class RubyStepSyntaxHighlighter {
 	final int COLOR_RED = 5;
 	final int COLOR_GREEN = 6;
 	final int COLOR_GRAY = 7;
-	
+
 	final int STYLE_DEFAULT = 0;
 	final int STYLE_STRING = 1;
 	final int STYLE_SYMBOL = 2;
@@ -75,10 +75,10 @@ public class RubyStepSyntaxHighlighter {
 	final int STYLE_COMMENT = 7;
 	final int STYLE_CONSTANT = 8;
 	final int STYLE_VARIABLE = 9;
-	
-	
+
+
 	StyleRange[] styles;
-	
+
 
 	public RubyStepSyntaxHighlighter() {
 
@@ -86,15 +86,15 @@ public class RubyStepSyntaxHighlighter {
 		Display display = Display.getDefault();
 		colors = new Color[] {
 				new Color(display, new RGB(0, 0, 0)), 		// black
-				new Color(display, new RGB(63, 127, 95)), 	// Greenish 
+				new Color(display, new RGB(63, 127, 95)), 	// Greenish
 				new Color(display, new RGB(0, 0, 192)), 	// Blue
 				new Color(display, new RGB(127, 0, 85)), 	// -- not used --
-				new Color(display, new RGB(255, 102, 0)), 	// Orange	
+				new Color(display, new RGB(255, 102, 0)), 	// Orange
 				new Color(display, new RGB(225, 0, 0)), 	// Red
 				new Color(display, new RGB(0, 128, 0)), 	// Green
 				new Color(display, new RGB(128, 128, 128)) 	// Gray
 		};
-		
+
 		styles = new StyleRange[] {
 			new StyleRange(0, 0, null, null, SWT.NORMAL),
 			new StyleRange(0, 0, colors[COLOR_RED], null, SWT.NORMAL),
@@ -109,21 +109,22 @@ public class RubyStepSyntaxHighlighter {
 		};
 
 		// -- lexer for finding language parts --
-		lexer = new RubyYaccLexer();
+		//ParserSupport parserSupport = new ParserSupport();
+		//byte[] utf8Script = new byte[1];
+		//LexerSource lexerSource = new ByteListLexerSource("tmp src", 0, new ByteList(utf8Script), null);
+		//lexer = new RubyLexer(parserSupport, lexerSource);
+		//RubyStepMeta meta = new RubyStepMeta();
+	        //ScriptingContainer container = RubyStepFactory.createScriptingContainer(true, meta.getRubyVersion());
+	        //Ruby runtime = container.getProvider().getRuntime();
+//		ParserConfiguration parserConfig = new ParserConfiguration(runtime, 0, true, CompatVersion.BOTH);
+//		parserSupport.setConfiguration(parserConfig);
+		//parserSupport.setResult(new RubyParserResult());
+		//parserSupport.setWarnings(new RubyWarnings(null));
+		//parserSupport.initTopLocalVariables();
 
-		ParserSupport parserSupport = new ParserSupport();
-    RubyStepMeta meta = new RubyStepMeta();
-    ScriptingContainer container = RubyStepFactory.createScriptingContainer(true,meta.getRubyVersion());
-    Ruby runtime = container.getProvider().getRuntime();
-		ParserConfiguration parserConfig = new ParserConfiguration(runtime, 0, true, CompatVersion.BOTH);
-		parserSupport.setConfiguration(parserConfig);
-		parserSupport.setResult(new RubyParserResult());
-		parserSupport.setWarnings(new RubyWarnings(null));
-		parserSupport.initTopLocalVariables();
-
-		lexer.setEncoding(RubyYaccLexer.UTF8_ENCODING);
-		lexer.setParserSupport(parserSupport);
-		lexer.setState(RubyYaccLexer.LexState.EXPR_BEG);
+//		lexer.setEncoding(Encoding.UTF8_ENCODING);
+//		lexer.setParserSupport(parserSupport);
+		//lexer.setState(RubyLexer.LexState.EXPR_BEG);
 
 	}
 
@@ -159,7 +160,7 @@ public class RubyStepSyntaxHighlighter {
 				return styles[STYLE_SYMBOL];
 			}
 			// fall through
-		case Tokens.tFID:
+/*		case Tokens.tFID:
 
 			if (value instanceof Token && PSEUDO_KEYWORDS_SET.contains(((Token) value).getValue().toString())) {
 				return styles[STYLE_KEYWORD];
@@ -172,7 +173,7 @@ public class RubyStepSyntaxHighlighter {
 			if (value instanceof Token && GLOBAL_FUNCTIONS_SET.contains(((Token) value).getValue().toString())) {
 				return styles[STYLE_GLOBAL_FUNCTION];
 			}
-
+*/
 		default:
 			return styles[STYLE_DEFAULT];
 		}
@@ -180,7 +181,6 @@ public class RubyStepSyntaxHighlighter {
 	}
 
 	public void highlight(String title, StyledTextComp wText) {
-
 		// set up lexer process
 		String script = wText.getText();
 		StyledText canvas = wText.getStyledText();
@@ -201,13 +201,22 @@ public class RubyStepSyntaxHighlighter {
 			return;
 		}
 
-		List<String> lines = new ArrayList<String>(canvas.getLineCount());
+//		List<String> lines = new ArrayList<String>(canvas.getLineCount());
+//                RubyArray lines = new RubyArray();
+		LexerSource lexerSource = new ByteListLexerSource(title, 0, new ByteList(utf8Script), null);
 
-		LexerSource lexerSource = new ByteArrayLexerSource(title, utf8Script, lines, 0, true);
-
-		lexer.reset();
+                if (lexer != null) {
+		    lexer.reset();
+		} else {
+	    	    ParserSupport parserSupport = new ParserSupport();
+                    lexer = new RubyLexer(parserSupport, lexerSource);
+		    parserSupport.setResult(new RubyParserResult());
+		    parserSupport.setWarnings(new RubyWarnings(null));
+		    parserSupport.initTopLocalVariables();
+		    lexer.setState(RubyLexer.LexState.EXPR_BEG);
+		}
 		lexer.setSource(lexerSource);
-		lexer.setState(RubyYaccLexer.LexState.EXPR_BEG);
+		lexer.setState(RubyLexer.LexState.EXPR_BEG);
 
 		// remember bounds of current token
 		int leftTokenBorder = 0;
@@ -220,11 +229,11 @@ public class RubyStepSyntaxHighlighter {
 		ArrayList<Integer> intRanges = new ArrayList<Integer>(400);
 
 		try {
-			
+
 			boolean keepParsing = true;
-			
+
 			while (keepParsing) {
-				
+
 				/* take care of comments, which are stripped out by the lexer */
 				int[] upcomingComment = null;
 				while ((rightTokenBorder >= lastCommentEnd || rightTokenBorder == 0 ) && (upcomingComment = getUpcomingCommentPos(utf8Script, rightTokenBorder)) != null){
@@ -236,11 +245,11 @@ public class RubyStepSyntaxHighlighter {
 
 					int left = leftTokenBorder - encodingBytes[leftTokenBorder];
 					int right = rightTokenBorder-encodingBytes[rightTokenBorder]- left;
-					
+
 					intRanges.add(left);
 					intRanges.add(right);
 				}
-				
+
 				/* read language syntax */
 				int oldOffset = lexerSource.getOffset();
 				prevt = t;
@@ -252,19 +261,19 @@ public class RubyStepSyntaxHighlighter {
 				if (leftTokenBorder < lastCommentEnd && lexerSource.getOffset() > lastCommentEnd){
 					leftTokenBorder = lastCommentEnd;
 				}
-				rightTokenBorder = lexerSource.getOffset();				
-				
+				rightTokenBorder = lexerSource.getOffset();
+
 				//System.out.println("Found token " + t + " -> " + lexer.value() + " [" + leftTokenBorder + "," + rightTokenBorder + "]");
 
 				// skip whitespace and error formatting
-				if (t != '\n' && t != -1){ 
+				if (t != '\n' && t != -1){
 					ranges.add(tokenToStyleRange(t, v, prevt));
 					int left = leftTokenBorder - encodingBytes[leftTokenBorder];
 					int right = rightTokenBorder-encodingBytes[rightTokenBorder]- (leftTokenBorder - encodingBytes[leftTokenBorder]);
 					intRanges.add(left);
-					intRanges.add(right); 
+					intRanges.add(right);
 				}
-			
+
 			}
 
 			// don't mind anything that might go wrong during parsing
@@ -284,7 +293,7 @@ public class RubyStepSyntaxHighlighter {
 			// the lexer will sometimes throw a non-syntax exception when confronted with malformed input
 			//e.printStackTrace();
 		}
-		
+
 		// don't mind swt errors in case some unforseen input brought the style ranges out of order
 		try {
 			canvas.setStyleRanges(ArrayUtils.toPrimitive(intRanges.toArray(new Integer[0])), ranges.toArray(new StyleRange[0]));
@@ -292,7 +301,7 @@ public class RubyStepSyntaxHighlighter {
 		catch (Exception e){
 			//e.printStackTrace();
 		}
-		
+
 
 	}
 
@@ -300,7 +309,7 @@ public class RubyStepSyntaxHighlighter {
 	// return null if there's no comment coming up
 	private int[] getUpcomingCommentPos(byte[] utf8Script, int pos) {
 
-		// if we're in the middle of a string or regex, there's no comments 
+		// if we're in the middle of a string or regex, there's no comments
 		if (lexer.getStrTerm() != null)
 			return null;
 
